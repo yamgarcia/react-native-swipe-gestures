@@ -1,125 +1,84 @@
-"use strict";
+import React, { useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import GestureRecognizer, {
+  swipeDirections,
+} from "react-native-swipe-gestures";
+import Constants from "expo-constants";
 
-import React, { Component } from "react";
-import { View, PanResponder } from "react-native";
+const SomeComponent = () => {
+  const [myText, setMyText] = useState("Swipe me");
+  const [backgroundColor, setBackgroundColor] = useState("#fff");
+  const [gestureName, setGestureName] = useState("none");
 
-export const swipeDirections = {
-  SWIPE_UP: "SWIPE_UP",
-  SWIPE_DOWN: "SWIPE_DOWN",
-  SWIPE_LEFT: "SWIPE_LEFT",
-  SWIPE_RIGHT: "SWIPE_RIGHT"
-};
+  const onSwipeUp = (gestureState) => {
+    setMyText("You swiped up!");
+  };
 
-const swipeConfig = {
-  velocityThreshold: 0.3,
-  directionalOffsetThreshold: 80,
-  gestureIsClickThreshold: 5
-};
+  const onSwipeDown = (gestureState) => {
+    setMyText("You swiped down!");
+  };
 
-function isValidSwipe(
-  velocity,
-  velocityThreshold,
-  directionalOffset,
-  directionalOffsetThreshold
-) {
-  return (
-    Math.abs(velocity) > velocityThreshold &&
-    Math.abs(directionalOffset) < directionalOffsetThreshold
-  );
-}
+  const onSwipeLeft = (gestureState) => {
+    setMyText("You swiped left!");
+  };
 
-class GestureRecognizer extends Component {
-  constructor(props, context) {
-    super(props, context);
-    this.swipeConfig = Object.assign(swipeConfig, props.config);
+  const onSwipeRight = (gestureState) => {
+    setMyText("You swiped right!");
+  };
 
-    const responderEnd = this._handlePanResponderEnd.bind(this);
-    const shouldSetResponder = this._handleShouldSetPanResponder.bind(this);
-    this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: shouldSetResponder,
-      onMoveShouldSetPanResponder: shouldSetResponder,
-      onPanResponderRelease: responderEnd,
-      onPanResponderTerminate: responderEnd
-    });
-  }
-  
-  componentDidUpdate(prevProps) {
-    if (this.props.config !== prevProps.config) {
-      this.swipeConfig = Object.assign(swipeConfig, this.props.config);
-    }
-  }
-  
-  _handleShouldSetPanResponder(evt, gestureState) {
-    return (
-      evt.nativeEvent.touches.length === 1 &&
-      !this._gestureIsClick(gestureState)
-    );
-  }
-
-  _gestureIsClick(gestureState) {
-    return (
-      Math.abs(gestureState.dx) < swipeConfig.gestureIsClickThreshold &&
-      Math.abs(gestureState.dy) < swipeConfig.gestureIsClickThreshold
-    );
-  }
-
-  _handlePanResponderEnd(evt, gestureState) {
-    const swipeDirection = this._getSwipeDirection(gestureState);
-    this._triggerSwipeHandlers(swipeDirection, gestureState);
-  }
-
-  _triggerSwipeHandlers(swipeDirection, gestureState) {
-    const {
-      onSwipe,
-      onSwipeUp,
-      onSwipeDown,
-      onSwipeLeft,
-      onSwipeRight
-    } = this.props;
-    const { SWIPE_LEFT, SWIPE_RIGHT, SWIPE_UP, SWIPE_DOWN } = swipeDirections;
-    onSwipe && onSwipe(swipeDirection, gestureState);
-    switch (swipeDirection) {
-      case SWIPE_LEFT:
-        onSwipeLeft && onSwipeLeft(gestureState);
-        break;
-      case SWIPE_RIGHT:
-        onSwipeRight && onSwipeRight(gestureState);
-        break;
+  const onSwipe = (gestureName, gestureState) => {
+    const { SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT } = swipeDirections;
+    setGestureName(gestureName);
+    switch (gestureName) {
       case SWIPE_UP:
-        onSwipeUp && onSwipeUp(gestureState);
+        setBackgroundColor("red");
         break;
       case SWIPE_DOWN:
-        onSwipeDown && onSwipeDown(gestureState);
+        setBackgroundColor("green");
+        break;
+      case SWIPE_LEFT:
+        setBackgroundColor("lightblue");
+        break;
+      case SWIPE_RIGHT:
+        setBackgroundColor("yellow");
         break;
     }
-  }
+  };
 
-  _getSwipeDirection(gestureState) {
-    const { SWIPE_LEFT, SWIPE_RIGHT, SWIPE_UP, SWIPE_DOWN } = swipeDirections;
-    const { dx, dy } = gestureState;
-    if (this._isValidHorizontalSwipe(gestureState)) {
-      return dx > 0 ? SWIPE_RIGHT : SWIPE_LEFT;
-    } else if (this._isValidVerticalSwipe(gestureState)) {
-      return dy > 0 ? SWIPE_DOWN : SWIPE_UP;
-    }
-    return null;
-  }
+  const config = {
+    velocityThreshold: 0.3,
+    directionalOffsetThreshold: 80,
+  };
 
-  _isValidHorizontalSwipe(gestureState) {
-    const { vx, dy } = gestureState;
-    const { velocityThreshold, directionalOffsetThreshold } = this.swipeConfig;
-    return isValidSwipe(vx, velocityThreshold, dy, directionalOffsetThreshold);
-  }
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingTop: Constants.statusBarHeight + 20,
+      backgroundColor: backgroundColor,
+    },
+  });
 
-  _isValidVerticalSwipe(gestureState) {
-    const { vy, dx } = gestureState;
-    const { velocityThreshold, directionalOffsetThreshold } = this.swipeConfig;
-    return isValidSwipe(vy, velocityThreshold, dx, directionalOffsetThreshold);
-  }
+  return (
+    <View style={styles.container}>
+      <GestureRecognizer
+        onSwipe={(direction, state) => onSwipe(direction, state)}
+        onSwipeUp={(state) => onSwipeUp(state)}
+        onSwipeDown={(state) => onSwipeDown(state)}
+        onSwipeLeft={(state) => onSwipeLeft(state)}
+        onSwipeRight={(state) => onSwipeRight(state)}
+        config={config}
+        style={{ styles }}
+      >
+        <Text style={{ fontSize: 34 }}>{myText}</Text>
+        <Text>
+          onSwipe callback received gesture:{" "}
+          {gestureName ? gestureName : "Try solving this bug"}
+        </Text>
+      </GestureRecognizer>
+    </View>
+  );
+};
 
-  render() {
-    return <View {...this.props} {...this._panResponder.panHandlers} />;
-  }
-}
-
-export default GestureRecognizer;
+export default SomeComponent;
